@@ -1,2 +1,5 @@
-# ESGRN
-evolutionary state graph recurrent networks
+# Evolutionary Graph Recurrent Networks
+
+Source codes for EGRM model
+
+Documentions are coming soon!

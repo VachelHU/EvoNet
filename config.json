@@ -1,0 +1,25 @@
+{
+  "overall": {
+    "input_dir": "./inputFile",
+    "tempRepo" : "./Repo",
+    "output_dir": "./outputResult"
+  },
+  "preprocessing": {
+    "normdataBymonth" : "./Repo/normdatasets",
+    "cleaned_dataset" : "./Repo"
+  },
+  "model": {
+    "overall": {
+      "gene_num": 50,
+      "latent_dim": 4,
+      "inputshape": [21, 24, 1],
+      "learning_rate": 0.01,
+      "batch_size": 50
+    }
+  },
+  "save":{
+    "repo": "./Repo/model/",
+    "assignmodel": "GMM",
+    "dataset": "earthquake"
+  }
+}
