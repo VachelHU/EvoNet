@@ -1,9 +1,8 @@
-Cython>=0.25.2
-Keras>=2.0.4
-dill>=0.2.5
-six>=1.10.0
 scipy>=0.19.0
 numpy>=1.11.0
 scikit_learn>=0.19.1
+xgboost>=0.80
+tensorflow>=1.1.0
+tslearn>=0.1.24
 
 
