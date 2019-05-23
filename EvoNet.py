@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 
-class ESGRN():
+class EvoNet():
     def init_weights(self, input_dim, output_dim, name, std=0.1, reg=None):
         return tf.get_variable(name, shape=[input_dim, output_dim], initializer=tf.random_normal_initializer(0.0, std), regularizer=reg)
 
@@ -66,12 +66,12 @@ class ESGRN():
             self.Uu = self.no_init_weights(self.n_features, self.n_features, name='Global_State_weight')
             self.bu = self.no_init_bias(self.n_features, name='Global_Hidden_bias')
 
-class ESGLSTM(ESGRN):
+class EvoLSTM(EvoNet):
     def __init__(self, timesteps, n_nodes, n_features, node_hidden, is_training=True):
-        ESGRN.__init__(self, timesteps, n_nodes, n_features, node_hidden, is_training)
+        EvoNet.__init__(self, timesteps, n_nodes, n_features, node_hidden, is_training)
 
     def LSTM_Unit(self, prev_hidden_memory, node_transform):
-        with tf.variable_scope('EGLSTM_Unit'):
+        with tf.variable_scope('EvoLSTM_Unit'):
             prev_node_hidden, prev_U = tf.unstack(prev_hidden_memory)
 
             send_nodes = node_transform[0]
@@ -121,17 +121,17 @@ class ESGLSTM(ESGRN):
         initial_node_hidden = tf.ones([batch_size, self.n_nodes, self.n_features], dtype=tf.float32) * self.node_hidden
         initial_cell = tf.stack([initial_node_hidden, initial_node_hidden])
 
-        packed = tf.scan(self.LSTM_Unit, (evolution_send, evolution_recieve), initializer=initial_cell, name="ESGLSTM")
+        packed = tf.scan(self.LSTM_Unit, (evolution_send, evolution_recieve), initializer=initial_cell, name="EvoLSTM")
 
         all_node_hiddens = tf.reshape(packed[:, 0], [self.timesteps, -1, self.n_nodes, self.n_features])
         return all_node_hiddens
 
-class ESGGRU(ESGRN):
+class EvoGRU(EvoNet):
     def __init__(self, timesteps, n_nodes, n_features, node_hidden, is_training=True):
-        ESGRN.__init__(self, timesteps, n_nodes, n_features, node_hidden, is_training)
+        EvoNet.__init__(self, timesteps, n_nodes, n_features, node_hidden, is_training)
 
     def GRU_Unit(self, prev_hidden_memory, node_transform):
-        with tf.variable_scope('ESGGRU_Unit'):
+        with tf.variable_scope('EvoGRU_Unit'):
             prev_node_hidden, prev_U = tf.unstack(prev_hidden_memory)
 
             send_nodes = node_transform[0]
@@ -169,7 +169,7 @@ class ESGGRU(ESGRN):
         initial_node_hidden = tf.ones([batch_size, self.n_nodes, self.n_features], dtype=tf.float32) * self.node_hidden
         initial_cell = tf.stack([initial_node_hidden, initial_node_hidden])
 
-        packed = tf.scan(self.GRU_Unit, (evolution_send, evolution_recieve), initializer=initial_cell, name="ESGGRU")
+        packed = tf.scan(self.GRU_Unit, (evolution_send, evolution_recieve), initializer=initial_cell, name="EvoGRU")
 
         all_node_hiddens = tf.reshape(packed[:, 0], [self.timesteps, -1, self.n_nodes, self.n_features])
         return all_node_hiddens

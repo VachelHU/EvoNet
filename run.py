@@ -6,7 +6,7 @@ import argparse
 import ops
 from dataloader import AppLoader
 from dataset import getdataset
-from esgrn_tsc import ESGRN_TSC
+from EvoNet_tsc import EvoNet_TSC
 import loggingOut as logging
 import metrics
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     print("train: {}, {} \ntest: {}, {}".format(trainx.shape, trainy.shape, testx.shape, testy.shape))
     args.inputshape = trainx.shape[1:]
 
-    model = ESGRN_TSC(args)
+    model = EvoNet_TSC(args)
 
     print('training.')
     tf.reset_default_graph()

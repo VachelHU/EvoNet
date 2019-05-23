@@ -4,11 +4,11 @@ import tensorflow as tf
 import numpy as np
 from pathlib import Path
 from state_recognition import StateRecognition
-from ESGRN import ESGLSTM
+from EvoNet import EvoLSTM
 from xgboost import XGBClassifier
 from sklearn.externals import joblib
 
-class ESGRN_TSC():
+class EvoNet_TSC():
     def __init__(self, args):
         self.args = args
         self.state_num = args.statenum
@@ -41,7 +41,7 @@ class ESGRN_TSC():
         self.vh = tf.placeholder(tf.float32, [self.state_num, self.pattern_dim], name='input_vertex_hidden')
         self.y_clf = tf.placeholder(tf.float32, [None, self.event_num], name='input_event_label')
 
-        lstm = ESGLSTM(self.hislen, self.state_num, self.pattern_dim, self.vh, is_training=is_training)
+        lstm = EvoLSTM(self.hislen, self.state_num, self.pattern_dim, self.vh, is_training=is_training)
         self.gene_hiddens = lstm.get_node_hiddens(self.va)
 
         net = tf.reshape(self.gene_hiddens[-1], [-1, self.state_num * self.pattern_dim])
