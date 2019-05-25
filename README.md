@@ -41,3 +41,16 @@ optional arguments:
 ## Reference
 
 [1] Wenjie Hu, Yang Yang, Zilong You, Zongtao Liu, Xiang Ren, 2019, Modeling Combinatorial Evolution in Time Series Prediction, In [arXiv:1905.05006v2](https://arxiv.org/abs/1905.05006v2), 2019
+
+```
+@article{hu2019evolutionarygraph,
+  author    = {Wenjie Hu, Yang Yang, Zilong You, Zongtao Liu and Xiang Ren},
+  title     = {Modeling Combinatorial Evolution in Time Series Prediction},
+  journal   = {CoRR},
+  volume    = {abs/1905.05006},
+  year      = {2019},
+  url       = {https://arxiv.org/abs/1905.05006v2},
+  archivePrefix = {arXiv},
+  eprint    = {1905.05006},
+}
+```
