@@ -1,5 +1,5 @@
 # ESGRN
-This project implements the Evolutionary State Graph Recurrent Networks proposed in [1], which is a GNN-based method for time series modeling.
+This project implements the State Graph Recurrent Networks proposed in [1]
 
 ## Compatibility
 
