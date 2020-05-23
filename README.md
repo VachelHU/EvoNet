@@ -1,9 +1,9 @@
-# ESGRN
-This project implements the State Graph Recurrent Networks proposed in [1]
+# EvoNet
+This project implements the Evolutionary State Graph Neural Network proposed in [1], which is a GNN-based method for time series analysis.
 
 ## Compatibility
 
-Code is compatible with tensorflow version 1.1.0 and Pyhton 3.6.2.
+Code is compatible with tensorflow version 1.2.0 and Pyhton 3.6.2.
 
 Some Python module dependencies are listed in `requirements.txt`, which can be easily installed with pip:
 
@@ -27,7 +27,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -v STATENUM, --statenum STATENUM
                         state number
-  -d {earthquake,webtraffic}, --dataset {earthquake,webtraffic}
+  -d {djia30,webtraffic}, --dataset {djia30,webtraffic}
                         select the dataset
   -lr LEARNING_RATE, --learning_rate LEARNING_RATE
                         learning rate
@@ -54,3 +54,4 @@ optional arguments:
   eprint    = {1905.05006},
 }
 ```
+
