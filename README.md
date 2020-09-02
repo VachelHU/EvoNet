@@ -40,16 +40,17 @@ optional arguments:
 
 ## Reference
 
-[1] Wenjie Hu, Yang Yang, Zilong You, Zongtao Liu, Xiang Ren, 2019, Modeling Combinatorial Evolution in Time Series Prediction, In [arXiv:1905.05006v2](https://arxiv.org/abs/1905.05006v2), 2019
+[1] Wenjie Hu, Yang Yang, Ziqiang Cheng, Carl Yang, Xiang Ren, 2020, Modeling Evolutionary State Graph for Time Series Prediction
+, In [arXiv:1905.05006v2](https://arxiv.org/abs/1905.05006v2), 2020
 
 ```
 @article{hu2019evolutionarygraph,
-  author    = {Wenjie Hu, Yang Yang, Zilong You, Zongtao Liu and Xiang Ren},
-  title     = {Modeling Combinatorial Evolution in Time Series Prediction},
+  author    = {Wenjie Hu, Yang Yang, Ziqiang Cheng, Carl Yang, Xiang Ren},
+  title     = {Modeling Evolutionary State Graph for Time Series Prediction},
   journal   = {CoRR},
   volume    = {abs/1905.05006},
-  year      = {2019},
-  url       = {https://arxiv.org/abs/1905.05006v2},
+  year      = {2020},
+  url       = {https://arxiv.org/abs/1905.05006},
   archivePrefix = {arXiv},
   eprint    = {1905.05006},
 }
