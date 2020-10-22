@@ -1,5 +1,5 @@
 # EvoNet
-This project implements the Evolutionary State Graph Neural Network proposed in [1], which is a GNN-based method for time series analysis.
+This project implements the Evolutionary State Graph Neural Network proposed in [1], which is a GNN-based method for time-series event prediction.
 
 ## Compatibility
 
@@ -40,19 +40,13 @@ optional arguments:
 
 ## Reference
 
-[1] Wenjie Hu, Yang Yang, Ziqiang Cheng, Carl Yang, Xiang Ren, 2020, Modeling Evolutionary State Graph for Time Series Prediction
-, In [arXiv:1905.05006v2](https://arxiv.org/abs/1905.05006v2), 2020
-
+[1] Wenjie, H; Yang, Y; Ziqiang, C; Carl, Y and Xiang, R, 2021, Time-Series Event Prediction with Evolutionary State Graph, In WSDM, 2021
 ```
-@article{hu2019evolutionarygraph,
-  author    = {Wenjie Hu, Yang Yang, Ziqiang Cheng, Carl Yang, Xiang Ren},
-  title     = {Modeling Evolutionary State Graph for Time Series Prediction},
-  journal   = {CoRR},
-  volume    = {abs/1905.05006},
-  year      = {2020},
-  url       = {https://arxiv.org/abs/1905.05006},
-  archivePrefix = {arXiv},
-  eprint    = {1905.05006},
+@inproceedings{hu2021evonet, 
+    title={Time-Series Event Prediction with Evolutionary State Graph},
+    author={Wenjie Hu and Yang Yang and Ziqiang Cheng and Carl Yang and Xiang Ren},
+    booktitle={Proceedings of WSDM},
+    year={2021}
 }
 ```
 
