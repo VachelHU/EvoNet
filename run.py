@@ -1,97 +1,160 @@
 # -*- coding: utf-8 -*-
 
-import tensorflow as tf
 import os
+import pickle
+import tensorflow as tf
 import argparse
-import ops
-from dataloader import AppLoader
-from dataset import getdataset
-from EvoNet_tsc import EvoNet_TSC
-import loggingOut as logging
-import metrics
+from model_core.config import ModelParam
+from data_factory import LoadData, BatchLoader
+
+from model_core.state_model import ClusterStateRecognition
+from model_core.models import EvoNet_TSC
+import model_core.metrics as mt
+
+datainfos = {'djia30': [50, 5, 4, 3.0],
+             'webtraffic': [12, 30, 1, 3.0],
+             'netflow': [15, 24, 2, 6.0],
+             'clockerr': [12, 4, 2, 6.0]}
 
 
-def fit(model, sess, x, y_clf, trainGeneAssign=False, iteration=100):
-    recognition, patterns = model.getState(x, train=trainGeneAssign)
+def main(dataname, gpu=0):
+    params = ModelParam()
+    params.data_name = dataname
+    params.his_len = datainfos[params.data_name][0]
+    params.segment_len = datainfos[params.data_name][1]
+    params.segment_dim = datainfos[params.data_name][2]
+    params.node_dim = 2 * params.segment_dim * params.segment_len
+    params.id_gpu = '{}'.format(gpu)
+    params.pos_weight = datainfos[params.data_name][3]
+    params.learning_rate = 0.001
 
-    shuffle_indices, train_indices, validate_indices = ops.splitvalidate(x.shape[0])
-    recognition = recognition[shuffle_indices]
-    y_clf = y_clf[shuffle_indices]
-    x = x[shuffle_indices]
+    os.environ["CUDA_VISIBLE_DEVICES"] = params.id_gpu
 
-    train_assign = recognition[train_indices]
-    train_hidden = patterns
-    train_y = y_clf[train_indices]
-    train_x = x[train_indices]
+    dataloader = LoadData()
+    dataloader.set_configuration(params)
 
-    validate_assign = recognition[validate_indices]
-    validate_hidden = patterns
-    validate_y = y_clf[validate_indices]
-    validate_x = x[validate_indices]
-
-    trainloader = AppLoader(model.batch_size)
-    trainloader.load_data(train_x, train_y, train_assign, train_hidden)
-
-    validateloader = AppLoader(model.batch_size)
-    validateloader.load_data(validate_x, validate_y, validate_assign, validate_hidden)
-
-    bestP = 0.0
-
-    for i in range(iteration):
-        loss = model.train(sess, trainloader)
-        y_pred, y_true, val_loss, _ = model.use(sess, validateloader)
-        metric_result = metrics.predict_accuracy(y_true, y_pred, need_acc=True)
-        logstr = 'Epochs {:d}, loss {:f}, vali loss {:f}, Accuracy {:f}'.format(i, loss, val_loss, metric_result['Accuracy'])
-        logging.info(logstr)
-        if metric_result['Accuracy'] > bestP:
-            model.storeModel(sess, model.save_prefix)
-            bestP = metric_result['Accuracy']
-            print('epoch {} store.'.format(i))
+    trainx, trainy, testx, testy = dataloader.fetch_data()
+    rawx, rawy = dataloader.fetch_raw_data()
+    print(rawx.shape, rawy.shape, trainx.shape, trainy.shape, testx.shape, testy.shape)
+    n = trainx.shape[0]+testx.shape[0]
+    y1 = sum(trainy[:,-1])+sum(testy[:, -1])
+    print(n, y1/n, rawx.shape[0] * rawx.shape[1])
 
 
-def test(model, sess, x, y_clf):
-    recognition, patterns = model.getState(x, train=False)
+    # state
+    print("state recognizing...")
+    state_model = ClusterStateRecognition()
+    state_model.set_configuration(params)
+    state_model.build_model()
+    # state_model.fit(rawx)
+    train_prob, train_patterns = state_model.predict(trainx)
+    test_prob, test_patterns = state_model.predict(testx)
+    print(train_patterns.shape, train_prob.shape, test_patterns.shape, test_prob.shape)
 
-    testloader = AppLoader(model.batch_size)
-    testloader.load_data(x, y_clf, recognition, patterns)
+    # establish dataloader
+    trainloader = BatchLoader(params.batch_size)
+    trainloader.load_data(trainx, trainy, train_prob, train_patterns, shuffle=True)
+    testloader = BatchLoader(params.batch_size)
+    testloader.load_data(testx, testy, test_prob, test_patterns, shuffle=False)
 
-    model.reloadModel(sess, model.save_prefix)
-    y_pred, y_true, _, _ = model.use(sess, testloader)
-    metric_result = metrics.predict_accuracy(y_true, y_pred, need_acc=True)
-    logging.info('Accuracy: {}'.format(metric_result['Accuracy']))
+    # model
+    model = EvoNet_TSC()
 
-if __name__ == '__main__':
-    # params
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--statenum", type=int, help="state number")
-    parser.add_argument("-d", "--dataset", type=str, choices=['earthquake', 'webtraffic'], help="select the dataset")
-    parser.add_argument("-lr", "--learning_rate", type=float, default=0.01, help="learning rate")
-    parser.add_argument("-b", "--batchsize", type=int, default=2000, help="batch size")
-    parser.add_argument("-g", "--gpu", type=str, default='0', help="state number")
-    parser.add_argument("-p", "--modelpath", type=str, default='./Repo', help="the path of storing model")
-    args = parser.parse_args()
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-
-    trainx, trainy, testx, testy = getdataset(dataname=args.dataset)
-    trainy = ops.one_hot(trainy, 2)
-    testy = ops.one_hot(testy, 2)
-    print("train: {}, {} \ntest: {}, {}".format(trainx.shape, trainy.shape, testx.shape, testy.shape))
-    args.inputshape = trainx.shape[1:]
-
-    model = EvoNet_TSC(args)
-
-    print('training.')
-    tf.reset_default_graph()
-    model.buildNets(is_training=True)
+    model.set_configuration(params)
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=1.0)
     config = tf.ConfigProto(gpu_options=gpu_options)
+    print('model training...')
     with tf.Session(config=config) as sess:
-        sess.run(tf.global_variables_initializer())
-        fit(model, sess, trainx, trainy, trainGeneAssign=True, iteration=100)
+        model.build_model(is_training=True)
+        init_vars = tf.global_variables_initializer()
+        sess.run(init_vars)
 
-    print("testing.")
-    model.buildNets(is_training=False)
+        bestP = 0.0
+        for i in range(100):
+            loss = model.fit(sess, trainloader)
+            y_pred, y_pred_prob = model.predict(sess, testloader)
+            results = mt.predict_accuracy(testy[:, -1], y_pred)
+            auc = mt.predict_auc(testy[:, -1], y_pred_prob[:, 1])
+            logstr = 'Epochs {:d}, loss {:f}, Accuracy {:f}, Precision {:f}, Recall {:f}, F1 {:f}, AUC {:f}'.format(i, loss, results['Accuracy'], results['Precision'], results['Recall'], results['F1'], auc)
+            print(logstr)
+            p = 2 * results['Precision'] * results['Recall'] / (results['Precision'] + results['Recall'])
+            if p > bestP:
+                model.store(params.model_save_path, sess=sess)
+                bestP = p
+                print('epoch {} store.'.format(i))
+
+
+    print("model testing...")
+    tf.reset_default_graph()
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
-        test(model, sess, testx, testy)
-        sess.close()
+        model.build_model(is_training=False)
+        model.restore(params.model_save_path, sess=sess)
+        y_pred, y_pred_prob = model.predict(sess, testloader)
+        results = mt.predict_accuracy(testy[:, -1], y_pred)
+        auc = mt.predict_auc(testy[:, -1], y_pred_prob[:, 1])
+        logstr = 'Accuracy {:f}, Precision {:f}, Recall {:f}, F1 {:f}, AUC {:f}'.format(results['Accuracy'], results['Precision'], results['Recall'], results['F1'], auc)
+        print(logstr)
+
+
+def getattention(dataname, gpu=0):
+    params = ModelParam()
+    params.data_name = dataname
+    params.his_len = datainfos[params.data_name][0]
+    params.segment_len = datainfos[params.data_name][1]
+    params.segment_dim = datainfos[params.data_name][2]
+    params.node_dim = 2 * params.segment_dim * params.segment_len
+    params.id_gpu = '{}'.format(gpu)
+    params.pos_weight = datainfos[params.data_name][3]
+    params.learning_rate = 0.001
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = params.id_gpu
+
+    dataloader = LoadData()
+    dataloader.set_configuration(params)
+
+    trainx, trainy, _, _ = dataloader.fetch_data()
+    rawx = trainx
+    rawy = trainy
+    print(rawx.shape, rawy.shape)
+
+    # state
+    print("state recognizing...")
+    state_model = ClusterStateRecognition()
+    state_model.set_configuration(params)
+    state_model.build_model()
+    prob, patterns = state_model.predict(rawx)
+    print(patterns.shape, prob.shape)
+
+    # establish dataloader
+    testloader = BatchLoader(params.batch_size)
+    testloader.load_data(rawx, rawy, prob, patterns, shuffle=False)
+
+    # model
+    model = EvoNet_TSC()
+    model.set_configuration(params)
+    tf.reset_default_graph()
+
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+        model.build_model(is_training=False)
+        model.restore(params.model_save_path, sess=sess)
+
+        y_pred, y_pred_prob = model.predict(sess, testloader)
+        attentions = model.getAttention(sess, testloader)
+
+        results = mt.predict_accuracy(rawy[:, -1], y_pred)
+        auc = mt.predict_auc(rawy[:, -1], y_pred_prob[:, 1])
+        logstr = 'Accuracy {:f}, Precision {:f}, Recall {:f}, F1 {:f}, AUC {:f}'.format(results['Accuracy'], results['Precision'], results['Recall'], results['F1'], auc)
+        print(logstr)
+
+        store_obj = {'x': rawx, 'y': rawy, 'prob': prob, 'pattern':patterns, 'attention':attentions}
+        pickle.dump(store_obj, open('./Repo/output/result_{}.pkl'.format(dataname), 'wb'), pickle.HIGHEST_PROTOCOL)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--dataset", type=str, choices=['djia30', 'webtraffic', 'netflow', 'clockerr'], default='djia30', help="select dataset")
+    parser.add_argument("-g", "--gpu", type=str, choices=['0', '1', '2'], default='0', help="target gpu id")
+    args = parser.parse_args()
+
+    main(args.dataset, gpu=args.gpu)
+    getattention(args.dataset, gpu=args.gpu)

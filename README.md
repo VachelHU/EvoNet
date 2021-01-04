@@ -13,29 +13,54 @@ pip install -r requirements.txt
 
 ### Input Format 
 
-An example data format is given where data is stored as a list containing 4 dimensionals tensors such as [number of samples × segment number × segment length × dimensionality].
+An example data format is given where data is stored as a list containing 4 dimensionals tensors such as
+ 
+`[number of samples × segment number × segment length × dimension of observation]`
+
+
+### Configuration
+We can use `./model_core/config.py` to set the parameters of model.
+
+```
+class ModelParam(object):
+    # basic
+    model_save_path = "./model"
+    n_jobs = os.cpu_count()
+
+    # dataset
+    data_path = './data'
+    data_name = 'webtraffic'
+    his_len = 15
+    segment_len = 24
+    segment_dim = 2
+    n_event = 2
+    norm = True
+
+    # state recognition
+    n_state = 30
+    covariance_type = 'diag'
+
+    # model
+    graph_dim = 256
+    node_dim = 96
+    learning_rate = 0.001
+    batch_size = 1000
+    id_gpu = '0'
+    pos_weight = 1.0
+```
+
 
 ### Main Script
 
 ```
 python run.py -h
 
-usage: run.py [-h] [-v STATENUM] [-d {earthquake,webtraffic}]
-              [-lr LEARNING_RATE] [-b BATCHSIZE] [-g GPU] [-p MODELPATH]
+usage: run.py [-h] [-d {djia30, webtraffic}] [-g GPU]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -v STATENUM, --statenum STATENUM
-                        state number
-  -d {djia30,webtraffic}, --dataset {djia30,webtraffic}
-                        select the dataset
-  -lr LEARNING_RATE, --learning_rate LEARNING_RATE
-                        learning rate
-  -b BATCHSIZE, --batchsize BATCHSIZE
-                        batch size
-  -g GPU, --gpu GPU     state number
-  -p MODELPATH, --modelpath MODELPATH
-                        the path of storing model
+  -d {djia30,webtraffic}, --dataset {djia30,webtraffic} select the dataset
+  -g GPU, --gpu GPU     target gpu id
 ```
 
 ## Reference
